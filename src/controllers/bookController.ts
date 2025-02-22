@@ -1,7 +1,6 @@
 import Book from "../models/bookModel";
 import {Request, Response} from "express";
 import { ApiResponse } from "./userController";
-import { FilterQuery } from 'mongoose';
 
 
 export const createBooksController = async(req:Request, 
@@ -30,25 +29,6 @@ export const createBooksController = async(req:Request,
         data: null
     })
 }
-// export const getAllBooksController = async(req:Request, res: Response<ApiResponse>) => {
-//     try{
-
-//         const AllBooks = await Book.find();
-//         res.status(200).json({
-//             status: 200,
-//             message: "All books retrieved successfully",
-//             data: AllBooks
-//         })
-
-//     } catch(err){
-//         res.status(500).json({
-//             status: 500,
-//             message: `An unexpected error occurred: ${err instanceof Error ? err.message : 'Unknown error'}`,
-//             data: null
-//         })
-//     }
-// }
-
 
 interface QueryParams {
     search?: string;
@@ -69,11 +49,9 @@ export const getAllBooksController = async (req: Request<{}, {}, {}, QueryParams
         const startTime = Date.now();
         const { search, genre, sortBy, sortOrder = 'asc' } = req.query;
 
-        // Start building the query
         let query = Book.find();
         let searchMetadata: SearchMetadata | null = null;
 
-        // Apply search filter if provided
         if (search) {
             const searchFields = ['title', 'author', 'description','genre'];
             query = query.or(
@@ -82,21 +60,18 @@ export const getAllBooksController = async (req: Request<{}, {}, {}, QueryParams
                 }))
             );
 
-            // Store search metadata
             searchMetadata = {
                 query: search,
-                matchCount: 0, // Will be updated after query execution
+                matchCount: 0,
                 searchFields,
-                executionTimeMs: 0 // Will be updated after query execution
+                executionTimeMs: 0 
             };
         }
 
-        // Apply genre filter if provided
         if (genre) {
             query = query.where('genre').equals(genre);
         }
 
-        // Apply sorting if provided
         if (sortBy) {
             const sortDirection = sortOrder === 'desc' ? -1 : 1;
             
@@ -115,17 +90,14 @@ export const getAllBooksController = async (req: Request<{}, {}, {}, QueryParams
             }
         }
 
-        // Execute the query
         const allBooks = await query.exec();
         const executionTime = Date.now() - startTime;
 
-        // Update search metadata if search was performed
         if (searchMetadata) {
             searchMetadata.matchCount = allBooks.length;
             searchMetadata.executionTimeMs = executionTime;
         }
 
-        // Return response
         res.status(200).json({
             status: 200,
             message: search 
@@ -143,7 +115,7 @@ export const getAllBooksController = async (req: Request<{}, {}, {}, QueryParams
                 search: searchMetadata,
                 pagination: {
                     total: allBooks.length,
-                    totalPages: 1, // Add proper pagination logic if needed
+                    totalPages: 1,
                     currentPage: 1
                 },
                 executionTimeMs: executionTime
@@ -164,14 +136,6 @@ export const getBookByIdController = async(req: Request, res: Response<ApiRespon
         const {id} = req.params;
         const book = await Book.findById(id);
         
-        // if(book === null) {
-        //     res.status(400).json({
-        //         status: 400, 
-        //         message: "Book not found", 
-        //         data: null
-        //     });
-        // }
-
         res.status(200).json({
             status: 200,
             message: "Book retrieved successfully",
@@ -189,7 +153,6 @@ export const deleteBookByIdController = async(req:Request, res: Response<ApiResp
     try{
         const {id} = req.params;
         const book = await Book.findByIdAndDelete(id);
-        // if(book === null) res.status(400).json({status: 400, message: "Book not found", data: null})
         res.status(200).json({
             status: 200,
             message: "Book deleted successfully",
@@ -208,7 +171,6 @@ export const updateBookById = async(req:Request, res: Response<ApiResponse>) => 
     try{
         const {id} = req.params;
         const book = await Book.findByIdAndUpdate(id, req.body, {new: true});
-        // if(book === null) res.status(400).json({status: 400, message: "Book not found", data: null})
         res.status(200).json({
             status: 200,
             message: "Book updated successfully",
