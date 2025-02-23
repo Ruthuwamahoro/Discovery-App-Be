@@ -69,12 +69,19 @@ interface SearchMetadata {
 }
 
 export const getAllBooksController = async (
-  req: Request<{}, {}, {}, QueryParams>,
+  req: Request<{}, {}, {}, QueryParams & { page?: number; limit?: number }>,
   res: Response<ApiResponse>
 ) => {
   try {
     const startTime = Date.now();
-    const { search, genre, sortBy, sortOrder = "asc" } = req.query;
+    const {
+      search,
+      genre,
+      sortBy,
+      sortOrder = "asc",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     let query = Book.find();
     let searchMetadata: SearchMetadata | null = null;
@@ -117,7 +124,14 @@ export const getAllBooksController = async (
       }
     }
 
-    const allBooks = await query.exec();
+    const totalBooks = await Book.countDocuments(query);
+    const totalPages = Math.ceil(totalBooks / limit);
+    const currentPage = Math.min(page, totalPages);
+
+    const allBooks = await query
+      .skip((currentPage - 1) * limit)
+      .limit(limit)
+      .exec();
     const executionTime = Date.now() - startTime;
 
     if (searchMetadata) {
@@ -132,7 +146,7 @@ export const getAllBooksController = async (
         : "Books retrieved successfully",
       data: {
         books: allBooks,
-        total: allBooks.length,
+        total: totalBooks,
         filters: {
           search,
           genre,
@@ -141,9 +155,9 @@ export const getAllBooksController = async (
         },
         search: searchMetadata,
         pagination: {
-          total: allBooks.length,
-          totalPages: 1,
-          currentPage: 1,
+          total: totalBooks,
+          totalPages,
+          currentPage,
         },
         executionTimeMs: executionTime,
       },
@@ -246,6 +260,37 @@ export const updateBookById = async (
       status: 200,
       message: "Book updated successfully",
       data: book,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 500,
+      message: `An unexpected error occurred: ${
+        err instanceof Error ? err.message : "Unknown error"
+      }`,
+      data: null,
+    });
+  }
+};
+
+export const getRecommendedBooksController = async (
+  req: Request,
+  res: Response<ApiResponse>
+) => {
+  try {
+    const { genre, limit = 5 } = req.query;
+
+    let query = Book.find();
+
+    if (genre) {
+      query = query.where("genre").equals(genre);
+    }
+
+    const recommendedBooks = await query.limit(Number(limit)).exec();
+
+    res.status(200).json({
+      status: 200,
+      message: "Recommended books retrieved successfully",
+      data: recommendedBooks,
     });
   } catch (err) {
     res.status(500).json({
