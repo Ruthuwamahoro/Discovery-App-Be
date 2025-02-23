@@ -61,7 +61,7 @@ Discovery-App-be is the backend service for the Discovery App, which provides AP
 - `GET /api/books/:id` - Add single book
 - `PATCH /api/books/:id` - Add update single book
 - `DELETE /api/books/:id` - Add delete single book
-
+- `GET /api/books/recommendations` - Get all recommendations
 
 ## Contributing
 
@@ -71,7 +71,6 @@ Discovery-App-be is the backend service for the Discovery App, which provides AP
 4. Commit your changes (`git commit -m 'Add some feature'`).
 5. Push to the branch (`git push origin feature-branch`).
 6. Open a pull request.
-
 
 ## Contact
 
