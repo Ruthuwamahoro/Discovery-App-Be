@@ -28,13 +28,11 @@ export const createBooksController = async (
     !rating ||
     !stock
   ) {
-    res
-      .status(404)
-      .json({
-        status: 404,
-        message: "All fields must be provided",
-        data: null,
-      });
+    res.status(404).json({
+      status: 404,
+      message: "All fields must be provided",
+      data: null,
+    });
   }
 
   const addBooks = new Book({
@@ -169,6 +167,15 @@ export const getBookByIdController = async (
     const { id } = req.params;
     const book = await Book.findById(id);
 
+    if (!book) {
+      res.status(404).json({
+        status: 404,
+        message: "Book not found",
+        data: null,
+      });
+      return;
+    }
+
     res.status(200).json({
       status: 200,
       message: "Book retrieved successfully",
@@ -184,6 +191,7 @@ export const getBookByIdController = async (
     });
   }
 };
+
 export const deleteBookByIdController = async (
   req: Request,
   res: Response<ApiResponse>
@@ -191,6 +199,16 @@ export const deleteBookByIdController = async (
   try {
     const { id } = req.params;
     const book = await Book.findByIdAndDelete(id);
+
+    if (!book) {
+      res.status(404).json({
+        status: 404,
+        message: "Book not found",
+        data: null,
+      });
+      return;
+    }
+
     res.status(200).json({
       status: 200,
       message: "Book deleted successfully",
@@ -214,6 +232,16 @@ export const updateBookById = async (
   try {
     const { id } = req.params;
     const book = await Book.findByIdAndUpdate(id, req.body, { new: true });
+
+    if (!book) {
+      res.status(404).json({
+        status: 404,
+        message: "Book not found",
+        data: null,
+      });
+      return;
+    }
+
     res.status(200).json({
       status: 200,
       message: "Book updated successfully",
